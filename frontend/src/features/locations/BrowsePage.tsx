@@ -25,8 +25,8 @@ export default function BrowsePage() {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="p-8">
+    <div className="bg-gray-50 h-full overflow-hidden">
+      <div className="p-8 h-full flex flex-col">
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-gray-900 mb-2">Browse Locations</h1>
           <p className="text-sm text-gray-500">Select a location to view its residents</p>
@@ -39,7 +39,7 @@ export default function BrowsePage() {
           </div>
         )}
       
-        <div className="grid grid-cols-3 gap-6 h-[calc(100vh-240px)]">
+        <div className="grid grid-cols-3 gap-6 flex-1 min-h-0">
           <LocationList
             locations={locations}
             selectedLocation={selectedLocation}
