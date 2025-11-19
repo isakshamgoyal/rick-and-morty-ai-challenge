@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { apiClient, type Location, type Character } from '@/lib/api';
+import { apiClient, type Location, type Character, type Note } from '@/lib/api';
 
 export default function BrowsePage() {
   const [locations, setLocations] = useState<Location[]>([]);
@@ -11,6 +11,12 @@ export default function BrowsePage() {
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [notesLoading, setNotesLoading] = useState(false);
+  const [newNoteContent, setNewNoteContent] = useState('');
+  const [savingNote, setSavingNote] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<number | null>(null);
+  const [editContent, setEditContent] = useState('');
   const observerTarget = useRef<HTMLDivElement>(null);
   const loadingPagesRef = useRef<Set<number>>(new Set());
 
@@ -76,6 +82,93 @@ export default function BrowsePage() {
 
   const handleCharacterSelect = (character: Character) => {
     setSelectedCharacter(character);
+    loadNotes(character.id);
+  };
+
+  const loadNotes = async (characterId: number) => {
+    setNotesLoading(true);
+    try {
+      const data = await apiClient.getCharacterNotes(characterId);
+      setNotes(data.notes);
+    } catch (err) {
+      console.error('Error loading notes:', err);
+    } finally {
+      setNotesLoading(false);
+    }
+  };
+
+  const handleAddNote = async () => {
+    if (!selectedCharacter || !newNoteContent.trim() || savingNote) return;
+
+    setSavingNote(true);
+    try {
+      const newNote = await apiClient.createNote({
+        character_id: selectedCharacter.id,
+        content: newNoteContent.trim(),
+      });
+      setNotes(prev => [newNote, ...prev]);
+      setNewNoteContent('');
+    } catch (err) {
+      console.error('Error creating note:', err);
+      alert('Failed to create note');
+    } finally {
+      setSavingNote(false);
+    }
+  };
+
+  const handleUpdateNote = async (noteId: number) => {
+    if (!editContent.trim()) return;
+
+    setSavingNote(true);
+    try {
+      const updatedNote = await apiClient.updateNote(noteId, {
+        content: editContent.trim(),
+      });
+      setNotes(prev => prev.map(note => note.id === noteId ? updatedNote : note));
+      setEditingNoteId(null);
+      setEditContent('');
+    } catch (err) {
+      console.error('Error updating note:', err);
+      alert('Failed to update note');
+    } finally {
+      setSavingNote(false);
+    }
+  };
+
+  const handleDeleteNote = async (noteId: number) => {
+    if (!confirm('Are you sure you want to delete this note?')) return;
+
+    setSavingNote(true);
+    try {
+      await apiClient.deleteNote(noteId);
+      setNotes(prev => prev.filter(note => note.id !== noteId));
+    } catch (err) {
+      console.error('Error deleting note:', err);
+      alert('Failed to delete note');
+    } finally {
+      setSavingNote(false);
+    }
+  };
+
+  const startEditing = (note: Note) => {
+    setEditingNoteId(note.id);
+    setEditContent(note.content);
+  };
+
+  const cancelEditing = () => {
+    setEditingNoteId(null);
+    setEditContent('');
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   const getStatusColor = (status: string) => {
@@ -216,25 +309,124 @@ export default function BrowsePage() {
           </div>
           <div className="flex-1 overflow-y-auto p-4">
             {selectedCharacter ? (
-              <div className="text-center">
-                <img
-                  src={selectedCharacter.image}
-                  alt={selectedCharacter.name}
-                  className="w-28 h-28 rounded-full mx-auto mb-4 object-cover border-4 border-gray-100 shadow-sm"
-                />
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">{selectedCharacter.name}</h2>
-                <div className="flex items-center justify-center gap-6">
-                  <div>
-                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-1">Status</span>
-                    <div className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedCharacter.status)}`}>
-                      {selectedCharacter.status}
+              <div>
+                <div className="text-center mb-6">
+                  <img
+                    src={selectedCharacter.image}
+                    alt={selectedCharacter.name}
+                    className="w-28 h-28 rounded-full mx-auto mb-4 object-cover border-4 border-gray-100 shadow-sm"
+                  />
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">{selectedCharacter.name}</h2>
+                  <div className="flex items-center justify-center gap-6">
+                    <div>
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-1">Status</span>
+                      <div className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedCharacter.status)}`}>
+                        {selectedCharacter.status}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-1">Species</span>
+                      <div className="text-gray-900 text-sm">
+                        {selectedCharacter.species}
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <span className="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-1">Species</span>
-                    <div className="text-gray-900 text-sm">
-                      {selectedCharacter.species}
-                    </div>
+                </div>
+
+                <div className="border-t border-gray-200 pt-6">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Notes</h3>
+                  
+                  <div className="mb-4">
+                    <textarea
+                      value={newNoteContent}
+                      onChange={(e) => setNewNoteContent(e.target.value)}
+                      placeholder="Add a note about this character..."
+                      disabled={savingNote}
+                      className="w-full p-3 text-sm text-gray-900 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                      rows={3}
+                    />
+                    <button
+                      onClick={handleAddNote}
+                      disabled={savingNote || !newNoteContent.trim()}
+                      className="mt-2 w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {savingNote ? 'Saving...' : 'Save Note'}
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {notesLoading ? (
+                      <div className="text-center py-4 text-gray-500 text-sm">
+                        Loading notes...
+                      </div>
+                    ) : notes.length === 0 ? (
+                      <div className="text-center py-4 text-gray-400 text-sm">
+                        No notes yet
+                      </div>
+                    ) : (
+                      notes.map((note) => (
+                        <div
+                          key={note.id}
+                          className="border border-gray-200 rounded-md p-3 bg-white hover:shadow-sm transition-shadow"
+                        >
+                          {editingNoteId === note.id ? (
+                            <div>
+                              <textarea
+                                value={editContent}
+                                onChange={(e) => setEditContent(e.target.value)}
+                                disabled={savingNote}
+                                className="w-full p-2 text-sm text-gray-900 border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
+                                rows={3}
+                              />
+                              <div className="flex gap-2 mt-2">
+                                <button
+                                  onClick={() => handleUpdateNote(note.id)}
+                                  disabled={savingNote || !editContent.trim()}
+                                  className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={cancelEditing}
+                                  disabled={savingNote}
+                                  className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <p className="text-sm text-gray-900 whitespace-pre-wrap mb-2">{note.content}</p>
+                              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                                <span className="text-xs text-gray-500">
+                                  {formatDate(note.created_at)}
+                                  {note.updated_at !== note.created_at && ' (edited)'}
+                                </span>
+                                <div className="flex gap-3">
+                                  <button
+                                    onClick={() => startEditing(note)}
+                                    disabled={savingNote}
+                                    className="text-xs text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteNote(note.id)}
+                                    disabled={savingNote}
+                                    className="text-xs text-red-600 hover:text-red-700 font-medium disabled:opacity-50"
+                                  >
+                                    <svg className="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>

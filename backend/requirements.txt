@@ -10,6 +10,10 @@ pydantic-settings>=2.0.0
 # GraphQL Client
 gql[all]>=3.5.0
 
+# Database
+sqlalchemy>=2.0.0
+asyncpg>=0.29.0
+greenlet
+
 # Development
 python-dotenv>=1.0.0
-
