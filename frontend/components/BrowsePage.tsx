@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { apiClient, type Location, type Character } from '@/lib/api';
 
 export default function BrowsePage() {
@@ -11,35 +11,63 @@ export default function BrowsePage() {
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const observerTarget = useRef<HTMLDivElement>(null);
+  const loadingPagesRef = useRef<Set<number>>(new Set());
 
-  useEffect(() => {
-    loadLocations(1);
-  }, []);
-
-  const loadLocations = async (page: number) => {
+  const loadLocations = useCallback(async (page: number) => {
+    if (loadingPagesRef.current.has(page)) return;
+    
+    loadingPagesRef.current.add(page);
     setLoading(true);
     setError(null);
+    
     try {
       const data = await apiClient.getLocations(page);
-      if (page === 1) {
-        setLocations(data.results);
-      } else {
-        setLocations(prev => [...prev, ...data.results]);
-      }
+      
+      setLocations(prev => {
+        if (page === 1) {
+          return data.results;
+        }
+        return [...prev, ...data.results];
+      });
+      
       setHasMore(data.info.next !== null);
+      setCurrentPage(page);
     } catch (error) {
       console.error('Error loading locations:', error);
       setError('Failed to load locations. Make sure the backend is running.');
     } finally {
       setLoading(false);
+      loadingPagesRef.current.delete(page);
     }
-  };
+  }, []);
 
-  const loadMore = () => {
+  const loadMore = useCallback(() => {
+    if (loading || !hasMore) return;
     const nextPage = currentPage + 1;
-    setCurrentPage(nextPage);
     loadLocations(nextPage);
-  };
+  }, [loading, hasMore, currentPage, loadLocations]);
+
+  useEffect(() => {
+    loadLocations(1);
+  }, [loadLocations]);
+
+  useEffect(() => {
+    const target = observerTarget.current;
+    if (!target || !hasMore || loading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [hasMore, loading, loadMore]);
 
   const handleLocationSelect = (location: Location) => {
     setSelectedLocation(location);
@@ -115,17 +143,12 @@ export default function BrowsePage() {
               );
             })}
             
-            {hasMore && (
-              <>
-                <div className="border-t border-gray-200 my-4"></div>
-                <button
-                  onClick={loadMore}
-                  disabled={loading}
-                  className="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 rounded-md text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {loading ? 'Loading...' : 'Load More'}
-                </button>
-              </>
+            {hasMore && <div ref={observerTarget} className="h-4" />}
+            
+            {loading && (
+              <div className="text-center py-4 text-gray-500 text-sm">
+                Loading more locations...
+              </div>
             )}
           </div>
         </div>
