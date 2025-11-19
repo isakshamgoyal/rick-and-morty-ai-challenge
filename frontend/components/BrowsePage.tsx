@@ -101,6 +101,8 @@ export default function BrowsePage() {
                         <span className="font-medium">{location.type}</span>
                         <span className="mx-1.5">·</span>
                         <span>{location.dimension}</span>
+                        <span className="mx-1.5">·</span>
+                        <span>{location.residents.length} {location.residents.length === 1 ? 'resident' : 'residents'}</span>
                       </p>
                     </div>
                     {isSelected && (
