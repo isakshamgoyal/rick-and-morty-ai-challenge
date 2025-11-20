@@ -17,6 +17,10 @@ export default function AIStudioLayout({ children }: AIStudioLayoutProps) {
       name: 'Character Backstory',
       href: '/ai-studio/character-backstory',
     },
+    {
+      name: 'Location Adventure Story',
+      href: '/ai-studio/location-adventure',
+    },
   ];
 
   return (

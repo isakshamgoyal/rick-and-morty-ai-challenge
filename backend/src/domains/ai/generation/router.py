@@ -2,7 +2,10 @@ import logging
 from fastapi import APIRouter, HTTPException
 
 from src.domains.ai.generation import models
-from src.domains.ai.generation.service import character_backstory_service
+from src.domains.ai.generation.service import (
+    character_backstory_service,
+    location_adventure_story_service
+)
 
 logger = logging.getLogger(__name__)
 
@@ -23,3 +26,17 @@ async def generate_character_backstory(request: models.CharacterBackstoryRequest
         logger.error(f"Error generating character backstory: {e}")
         raise HTTPException(status_code=500, detail="Failed to generate character backstory")
 
+
+@router.post("/location-adventure-story", response_model=models.GenerationResponse)
+async def generate_location_adventure_story(request: models.LocationAdventureStoryRequest):
+    """Generates a location adventure story using AI based on provided location data."""
+    try:
+        result = await location_adventure_story_service.generate(request)
+        logger.info(f"Successfully generated location adventure story for location {request.location.id}")
+        return result
+    except ValueError as e:
+        logger.warning(f"Invalid request for location adventure story generation: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error generating location adventure story: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate location adventure story")
