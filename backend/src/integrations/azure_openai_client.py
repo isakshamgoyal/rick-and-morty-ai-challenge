@@ -1,4 +1,3 @@
-"""Azure OpenAI client wrapper."""
 import asyncio
 import logging
 from typing import Dict, Any
@@ -15,15 +14,14 @@ class AzureOpenAIClient:
     def __init__(self):
         """Initialize Azure OpenAI client."""
         if not settings.AZURE_OPENAI_API_KEY or not settings.AZURE_OPENAI_ENDPOINT:
-            logger.warning("Azure OpenAI credentials not configured")
-            self.client = None
-        else:
-            self.client = AzureOpenAI(
-                api_key=settings.AZURE_OPENAI_API_KEY,
-                api_version=settings.AZURE_OPENAI_API_VERSION,
-                azure_endpoint=settings.AZURE_OPENAI_ENDPOINT
-            )
-            logger.info("Azure OpenAI client initialized")
+            raise ValueError("Azure OpenAI client not configured. Set AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT")
+        
+        self.client = AzureOpenAI(
+            api_key=settings.AZURE_OPENAI_API_KEY,
+            api_version=settings.AZURE_OPENAI_API_VERSION,
+            azure_endpoint=settings.AZURE_OPENAI_ENDPOINT
+        )
+        logger.info("Azure OpenAI client initialized")
     
     async def generate_completion(
         self,
@@ -44,9 +42,6 @@ class AzureOpenAIClient:
         Returns:
             Dict containing response text, usage, and metadata
         """
-        if not self.client:
-            raise ValueError("Azure OpenAI client not configured. Set AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT")
-        
         try:
             response = await asyncio.to_thread(
                 self.client.chat.completions.create,
@@ -72,6 +67,24 @@ class AzureOpenAIClient:
             
         except Exception as e:
             logger.error(f"Azure OpenAI API error: {e}")
+            raise
+    
+    async def generate_embedding(
+        self,
+        text: str,
+    ) -> list[float]:
+        """Generate an embedding vector for text using Azure OpenAI."""
+        try:
+            response = await asyncio.to_thread(
+                self.client.embeddings.create,
+                model=settings.AZURE_OPENAI_EMBEDDING_MODEL,
+                input=text
+            )
+            
+            return response.data[0].embedding
+            
+        except Exception as e:
+            logger.error(f"Azure OpenAI embedding error: {e}")
             raise
 
 
