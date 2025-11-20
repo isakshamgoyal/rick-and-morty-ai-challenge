@@ -112,6 +112,35 @@ export interface GenerationResponse {
   generated_content: string;
 }
 
+// AI Evaluation Types
+export interface EvaluationRequest {
+  generated_output: string;
+  expected_output?: string | null;
+  expected_output_embeddings?: number[] | null;
+  metadata?: Record<string, any> | null;
+}
+
+export interface LLMJudgeSubMetric {
+  score: number;
+  reasoning: string;
+  issues?: string[];
+  strengths?: string[];
+  improvements?: string[];
+}
+
+export interface LLMJudgeMetrics {
+  factual_consistency?: LLMJudgeSubMetric;
+  creativity?: LLMJudgeSubMetric;
+  [key: string]: LLMJudgeSubMetric | undefined;
+}
+
+export interface EvaluationResponse {
+  evaluation_metrics: Record<string, number>;
+  llm_judge_metrics?: LLMJudgeMetrics | null;
+  generated_output: string;
+  expected_output?: string | null;
+}
+
 export interface AIHealthResponse {
   status: string;
   azure_openai: boolean;
@@ -199,14 +228,28 @@ class ApiClient {
   }
 
   async generateCharacterBackstory(request: BackstoryRequest): Promise<GenerationResponse> {
-    return this.fetch<GenerationResponse>('/ai/generate/character-backstory', {
+    return this.fetch<GenerationResponse>('/ai/character-backstory/generate', {
       method: 'POST',
       body: JSON.stringify(request),
     });
   }
 
   async generateLocationAdventureStory(request: LocationAdventureStoryRequest): Promise<GenerationResponse> {
-    return this.fetch<GenerationResponse>('/ai/generate/location-adventure-story', {
+    return this.fetch<GenerationResponse>('/ai/location-adventure-story/generate', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async evaluateLocationAdventureStory(request: EvaluationRequest): Promise<EvaluationResponse> {
+    return this.fetch<EvaluationResponse>('/ai/location-adventure-story/evaluate?use_llm_judge=true', {
+      method: 'POST',
+      body: JSON.stringify(request),
+    });
+  }
+
+  async evaluateCharacterBackstory(request: EvaluationRequest): Promise<EvaluationResponse> {
+    return this.fetch<EvaluationResponse>('/ai/character-backstory/evaluate?use_llm_judge=true', {
       method: 'POST',
       body: JSON.stringify(request),
     });

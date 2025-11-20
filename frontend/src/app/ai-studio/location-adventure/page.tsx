@@ -3,7 +3,13 @@
 import { useState, useCallback } from 'react';
 import { LocationGrid, LocationDetails, useLocationsList, type Location, type LocationDetailed } from '@/src/features/locations';
 import { useInfiniteScroll } from '@/src/shared/hooks';
-import { apiClient, type LocationAdventureStoryRequest, type GenerationResponse } from '@/src/shared/lib/api';
+import {
+  apiClient,
+  type LocationAdventureStoryRequest,
+  type GenerationResponse,
+  type EvaluationRequest,
+  type EvaluationResponse,
+} from '@/src/shared/lib/api';
 
 type ViewState = 'selection' | 'details' | 'generating' | 'result';
 
@@ -13,8 +19,10 @@ export default function LocationAdventurePage() {
   const [locationDetails, setLocationDetails] = useState<LocationDetailed | null>(null);
   const [viewState, setViewState] = useState<ViewState>('selection');
   const [adventureStory, setAdventureStory] = useState<GenerationResponse | null>(null);
+  const [evaluation, setEvaluation] = useState<EvaluationResponse | null>(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [loadingAdventureStory, setLoadingAdventureStory] = useState(false);
+  const [loadingEvaluation, setLoadingEvaluation] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   const observerTarget = useInfiniteScroll({
@@ -33,6 +41,7 @@ export default function LocationAdventurePage() {
     setSelectedLocation(location);
     setLocationDetails(null);
     setAdventureStory(null);
+    setEvaluation(null);
     setErrorMessage(null);
   }, [viewState]);
 
@@ -61,6 +70,7 @@ export default function LocationAdventurePage() {
       // Generate adventure story
       const response = await apiClient.generateLocationAdventureStory(adventureStoryRequest);
       setAdventureStory(response);
+      setEvaluation(null);
       setViewState('result');
       setLoadingAdventureStory(false);
     } catch (err) {
@@ -85,10 +95,36 @@ export default function LocationAdventurePage() {
     setSelectedLocation(null);
     setLocationDetails(null);
     setAdventureStory(null);
+    setEvaluation(null);
     setErrorMessage(null);
     setLoadingDetails(false);
     setLoadingAdventureStory(false);
   }, []);
+
+  const handleEvaluateAdventureStory = useCallback(async () => {
+    if (!adventureStory || !locationDetails) return;
+
+    setLoadingEvaluation(true);
+    setErrorMessage(null);
+
+    try {
+      const request: EvaluationRequest = {
+        generated_output: adventureStory.generated_content,
+        expected_output: null,
+        expected_output_embeddings: null,
+        metadata: {
+          location: locationDetails,
+        },
+      };
+
+      const response = await apiClient.evaluateLocationAdventureStory(request);
+      setEvaluation(response);
+      setLoadingEvaluation(false);
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Failed to evaluate adventure story');
+      setLoadingEvaluation(false);
+    }
+  }, [adventureStory, locationDetails]);
 
   if (viewState === 'details' || viewState === 'generating' || viewState === 'result') {
     return (
@@ -128,10 +164,100 @@ export default function LocationAdventurePage() {
             )}
 
             {viewState === 'result' && adventureStory && (
-              <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-                <div className="mb-4">
+              <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm space-y-4">
+                <div className="space-y-3">
                   <h3 className="text-lg font-semibold text-gray-900">Generated Adventure Story</h3>
+
+                  <details
+                    className="mt-1 bg-gray-50 border border-gray-200 rounded-md px-3 py-2"
+                    open={!!evaluation}
+                  >
+                    <summary className="text-xs font-medium text-gray-700 cursor-pointer flex items-center justify-between gap-2">
+                      <span>Evaluation</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-gray-500">
+                          {evaluation ? (
+                            <>
+                              Overall:{' '}
+                              <span className="font-semibold">
+                                {(evaluation.evaluation_metrics.overall_score * 100).toFixed(1)}%
+                              </span>
+                            </>
+                          ) : (
+                            'Not evaluated yet'
+                          )}
+                        </span>
+                        {!evaluation && (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (!loadingEvaluation) {
+                                void handleEvaluateAdventureStory();
+                              }
+                            }}
+                            disabled={loadingEvaluation}
+                            className="px-3 py-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-white text-xs font-medium rounded-md transition-colors shadow-sm"
+                          >
+                            {loadingEvaluation ? 'Evaluating…' : 'Evaluate'}
+                          </button>
+                        )}
+                      </div>
+                    </summary>
+
+                    {evaluation && (
+                      <div className="mt-3 space-y-2">
+                        <dl className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                          {Object.entries(evaluation.evaluation_metrics)
+                            .filter(([name]) => name !== 'overall_score')
+                            .map(([name, value]) => (
+                              <div
+                                key={name}
+                                className="bg-white border border-gray-200 rounded-md px-3 py-2"
+                              >
+                                <dt className="text-xs font-medium text-gray-600">
+                                  {name.replace(/_/g, ' ')}
+                                </dt>
+                                <dd className="mt-1 text-sm font-semibold text-gray-900">
+                                  {(value * 100).toFixed(1)}%
+                                </dd>
+                              </div>
+                            ))}
+                        </dl>
+
+                        {evaluation.llm_judge_metrics && (
+                          <div className="mt-2 space-y-2">
+                            <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                              LLM Judge
+                            </h4>
+                            <div className="space-y-2">
+                              {Object.entries(evaluation.llm_judge_metrics).map(([name, details]) => (
+                                <div
+                                  key={name}
+                                  className="border border-purple-100 bg-purple-50 rounded-md px-3 py-2"
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-xs font-semibold text-purple-900">
+                                      {name.replace(/_/g, ' ')}
+                                    </span>
+                                    <span className="text-xs font-semibold text-purple-900">
+                                      {((details?.score ?? 0) * 100).toFixed(1)}%
+                                    </span>
+                                  </div>
+                                  {details?.reasoning && (
+                                    <p className="mt-1 text-xs text-purple-900">
+                                      {details.reasoning}
+                                    </p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </details>
                 </div>
+
                 <div className="prose prose-sm max-w-none">
                   <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{adventureStory.generated_content}</p>
                 </div>
