@@ -28,6 +28,28 @@ class Settings(BaseSettings):
     )
     
     RICK_MORTY_GRAPHQL_URL: str = "https://rickandmortyapi.com/graphql"
+    
+    # Azure OpenAI
+    AZURE_OPENAI_API_KEY: str = Field(
+        default="",
+        description="Azure OpenAI API Key",
+        env="AZURE_OPENAI_API_KEY"
+    )
+    AZURE_OPENAI_ENDPOINT: str = Field(
+        default="",
+        description="Azure OpenAI Endpoint URL",
+        env="AZURE_OPENAI_ENDPOINT"
+    )
+    AZURE_OPENAI_DEPLOYMENT: str = Field(
+        default="gpt-4o",
+        description="Azure OpenAI Deployment Name",
+        env="AZURE_OPENAI_DEPLOYMENT"
+    )
+    AZURE_OPENAI_API_VERSION: str = Field(
+        default="2024-02-15-preview",
+        description="Azure OpenAI API Version",
+        env="AZURE_OPENAI_API_VERSION"
+    )
         
     class Config:
         env_file = ".env"

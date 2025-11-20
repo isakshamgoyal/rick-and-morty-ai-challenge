@@ -1,26 +1,16 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { apiClient } from '@/src/shared/lib/api';
-import type { LocationDetailed, LocationsWithResidentsPage } from '../types';
+import type { Character, CharactersPage } from '../types';
 
-/**
- * Converts an error object into a user-friendly error message string.
- */
 function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
   }
-  return 'Failed to load locations. Make sure the backend is running.';
+  return 'Failed to load characters. Make sure the backend is running.';
 }
 
-/**
- * Custom hook for fetching and managing paginated locations with infinite scroll support.
- * Handles loading states, error handling, and pagination automatically.
- * 
- * @param includeResidents - Whether to include resident data with each location
- * @returns Object containing locations array, loading states, error states, and control functions
- */
-export function useLocations(includeResidents: boolean = true) {
-  const [locations, setLocations] = useState<LocationDetailed[]>([]);
+export function useCharacters() {
+  const [characters, setCharacters] = useState<Character[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -29,7 +19,7 @@ export function useLocations(includeResidents: boolean = true) {
   const loadingPagesRef = useRef<Set<number>>(new Set());
   const isMountedRef = useRef(true);
 
-  const loadLocations = useCallback(async (page: number) => {
+  const loadCharacters = useCallback(async (page: number) => {
     if (loadingPagesRef.current.has(page)) return;
     
     loadingPagesRef.current.add(page);
@@ -43,25 +33,25 @@ export function useLocations(includeResidents: boolean = true) {
     }
     
     try {
-      const data = await apiClient.getLocations(page, includeResidents);
+      const data = await apiClient.getCharacters(page);
       
       if (!isMountedRef.current) return;
       
-      const locationsData = data as LocationsWithResidentsPage;
+      const charactersData = data as CharactersPage;
       
-      setLocations(prev => {
+      setCharacters(prev => {
         if (page === 1) {
-          return locationsData.results;
+          return charactersData.results;
         }
-        const existingIds = new Set(prev.map(loc => loc.id));
-        const newLocations = locationsData.results.filter(loc => !existingIds.has(loc.id));
-        return [...prev, ...newLocations];
+        const existingIds = new Set(prev.map(char => char.id));
+        const newCharacters = charactersData.results.filter(char => !existingIds.has(char.id));
+        return [...prev, ...newCharacters];
       });
       
       setHasMore(data.info.next !== null);
       setCurrentPage(page);
     } catch (error) {
-      console.error('Error loading locations:', error);
+      console.error('Error loading characters:', error);
       
       if (!isMountedRef.current) return;
       
@@ -79,29 +69,29 @@ export function useLocations(includeResidents: boolean = true) {
         setLoading(false);
       }
     }
-  }, [includeResidents]);
+  }, []);
 
   const loadMore = useCallback(() => {
     if (loading || !hasMore || paginationError) return;
-    loadLocations(currentPage + 1);
-  }, [loading, hasMore, currentPage, loadLocations, paginationError]);
+    loadCharacters(currentPage + 1);
+  }, [loading, hasMore, currentPage, loadCharacters, paginationError]);
 
   const retry = useCallback(() => {
-    loadLocations(1);
-  }, [loadLocations]);
+    loadCharacters(1);
+  }, [loadCharacters]);
 
   const retryPagination = useCallback(() => {
     if (currentPage >= 1 && !loading) {
       setPaginationError(null);
       setHasMore(true);
-      loadLocations(currentPage + 1);
+      loadCharacters(currentPage + 1);
     }
-  }, [currentPage, loadLocations, loading]);
+  }, [currentPage, loadCharacters, loading]);
 
   useEffect(() => {
     isMountedRef.current = true;
-    loadLocations(1);
-
+    loadCharacters(1);
+    
     return () => {
       isMountedRef.current = false;
       loadingPagesRef.current.clear();
@@ -110,7 +100,7 @@ export function useLocations(includeResidents: boolean = true) {
   }, []);
 
   return {
-    locations,
+    characters,
     loading,
     error,
     paginationError,

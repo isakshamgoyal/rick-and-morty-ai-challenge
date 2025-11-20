@@ -21,7 +21,10 @@ export default function Sidebar() {
       <div className="flex-1 px-3 py-4">
         <nav className="space-y-1">
           {navigation.map((item) => {
-            const isActive = pathname === item.href;
+            // For root path, match exactly. For other paths, match if pathname starts with href
+            const isActive = item.href === '/' 
+              ? pathname === item.href 
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <button
                 key={item.name}
