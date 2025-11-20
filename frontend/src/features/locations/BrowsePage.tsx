@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import type { Location, Character } from './types';
+import { useState, useCallback, useMemo } from 'react';
+import type { LocationDetailed, Character } from './types';
 import { useLocations } from './hooks/useLocations';
 import { useInfiniteScroll } from '@/src/shared/hooks';
 import LocationList from './components/LocationList';
@@ -10,19 +10,27 @@ import CharacterDetails from './components/CharacterDetails';
 import { NotesPanel } from '@/src/features/notes';
 
 export default function BrowsePage() {
-  const { locations, loading, error, hasMore, loadMore } = useLocations();
-  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+  const { locations, loading, error, paginationError, hasMore, loadMore, retry, retryPagination } = useLocations(true);
+  const [selectedLocation, setSelectedLocation] = useState<LocationDetailed | null>(null);
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
-  const observerTarget = useInfiniteScroll(hasMore, loading, loadMore);
+  
+  const observerTarget = useInfiniteScroll({
+    hasMore,
+    loading,
+    onLoadMore: loadMore,
+    error: error || paginationError,
+  });
 
-  const handleLocationSelect = (location: Location) => {
+  const handleLocationSelect = useCallback((location: LocationDetailed) => {
     setSelectedLocation(location);
     setSelectedCharacter(null);
-  };
+  }, []);
 
-  const handleCharacterSelect = (character: Character) => {
+  const handleCharacterSelect = useCallback((character: Character) => {
     setSelectedCharacter(character);
-  };
+  }, []);
+
+  const hasErrorAndNoData = error && locations.length === 0;
 
   return (
     <div className="bg-gray-50 h-full overflow-hidden">
@@ -32,10 +40,21 @@ export default function BrowsePage() {
           <p className="text-sm text-gray-500">Select a location to view its residents</p>
         </div>
       
-        {error && (
-          <div className="mb-4 bg-red-50 border-l-4 border-red-500 text-red-700 px-4 py-3 rounded-md shadow-sm">
-            <p className="text-sm font-medium">Error</p>
-            <p className="text-sm mt-1 text-red-600">{error}</p>
+        {paginationError && locations.length > 0 && (
+          <div className="mb-4 bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 px-4 py-3 rounded-md shadow-sm">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <p className="text-sm font-medium">Warning</p>
+                <p className="text-sm mt-1 text-yellow-700">Unable to load more locations. {paginationError}</p>
+              </div>
+              <button
+                onClick={retryPagination}
+                disabled={loading}
+                className="ml-4 px-3 py-1.5 text-sm font-medium text-yellow-800 bg-yellow-100 hover:bg-yellow-200 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Retrying...' : 'Retry'}
+              </button>
+            </div>
           </div>
         )}
       
@@ -47,6 +66,8 @@ export default function BrowsePage() {
             hasMore={hasMore}
             observerTarget={observerTarget}
             onLocationSelect={handleLocationSelect}
+            error={hasErrorAndNoData ? error : null}
+            onRetry={hasErrorAndNoData ? retry : undefined}
           />
 
           <ResidentList

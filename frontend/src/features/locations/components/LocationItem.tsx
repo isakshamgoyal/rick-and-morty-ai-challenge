@@ -1,9 +1,9 @@
-import type { Location } from '../types';
+import type { LocationDetailed } from '../types';
 
 interface LocationItemProps {
-  location: Location;
+  location: LocationDetailed;
   isSelected: boolean;
-  onClick: (location: Location) => void;
+  onClick: (location: LocationDetailed) => void;
 }
 
 export default function LocationItem({ location, isSelected, onClick }: LocationItemProps) {

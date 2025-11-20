@@ -14,7 +14,17 @@ class Character(BaseModel):
 
 
 class Location(BaseModel):
-    """Location with nested residents."""
+    """Location model"""
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: int
+    name: str
+    type: str
+    dimension: str
+
+
+class LocationDetailed(BaseModel):
+    """Location with all fields."""
     model_config = ConfigDict(from_attributes=True)
     
     id: int
@@ -41,3 +51,10 @@ class LocationsPage(BaseModel):
     info: PaginationInfo
     results: List[Location]
 
+
+class LocationsWithResidentsPage(BaseModel):
+    """Paginated locations response (with residents)."""
+    model_config = ConfigDict(from_attributes=True)
+    
+    info: PaginationInfo
+    results: List[LocationDetailed]

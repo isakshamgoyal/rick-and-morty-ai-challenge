@@ -1,8 +1,8 @@
-import type { Location, Character } from '../types';
+import type { LocationDetailed, Character } from '../types';
 import ResidentItem from './ResidentItem';
 
 interface ResidentListProps {
-  location: Location | null;
+  location: LocationDetailed | null;
   selectedCharacter: Character | null;
   onCharacterSelect: (character: Character) => void;
 }
