@@ -18,8 +18,8 @@ class CharacterLocation(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
     name: str
-    type: str
-    dimension: str
+    type: Optional[str] = None
+    dimension: Optional[str] = None
 
 
 class Episode(BaseModel):
