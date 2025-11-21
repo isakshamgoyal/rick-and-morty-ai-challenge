@@ -10,6 +10,7 @@ from src.domains.ai.location_adventure_story.models import (
     LocationAdventureEvaluationRequest,
 )
 from src.domains.ai.location_adventure_story.evaluator import LocationAdventureEvaluator
+from src.domains.ai.location_adventure_story.prompts import LOCATION_ADVENTURE_STORY_SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ class LocationAdventureStoryService(BaseGenerationService):
     }
     
     def __init__(self):
-        super().__init__("location_adventure_story_system.txt")
+        super().__init__(system_prompt=LOCATION_ADVENTURE_STORY_SYSTEM_PROMPT)
         self.evaluator = LocationAdventureEvaluator()
     
     def _build_user_prompt(self, request: LocationAdventureStoryRequest) -> str:

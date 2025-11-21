@@ -10,6 +10,8 @@ from src.domains.ai.character_backstory.models import (
     CharacterBackstoryEvaluationRequest,
 )
 from src.domains.ai.character_backstory.evaluator import CharacterBackstoryEvaluator
+from src.domains.ai.character_backstory.prompts import CHARACTER_BACKSTORY_SYSTEM_PROMPT
+
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +29,7 @@ class CharacterBackstoryService(BaseGenerationService):
     }
     
     def __init__(self):
-        super().__init__("character_backstory_system.txt")
+        super().__init__(system_prompt=CHARACTER_BACKSTORY_SYSTEM_PROMPT)
         self.evaluator = CharacterBackstoryEvaluator()
     
     def _build_user_prompt(self, request: CharacterBackstoryRequest) -> str:
