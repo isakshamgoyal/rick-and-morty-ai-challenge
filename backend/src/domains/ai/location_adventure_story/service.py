@@ -4,7 +4,7 @@ from src.core.ai.generation.base import BaseGenerationService
 from src.core.ai.generation.models import GenerationResponse
 from src.core.ai.evaluation.models import EvaluationResponse
 from src.core.ai.evaluation.service import evaluation_service
-from src.domains.ai.utils import clean_prompt, build_location_context
+from src.core.utils import clean_prompt, build_location_context
 from src.domains.ai.location_adventure_story.models import (
     LocationAdventureStoryRequest,
     LocationAdventureEvaluationRequest,

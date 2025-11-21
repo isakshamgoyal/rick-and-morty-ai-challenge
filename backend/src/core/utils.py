@@ -8,6 +8,7 @@ def clean_prompt(text: str) -> str:
     cleaned = re.sub(' +', ' ', cleaned)
     return cleaned.strip()
 
+
 def contains_exact(text: str, value: str) -> bool:
     """Check if text contains an exact match for a value."""
     if not value:
@@ -15,9 +16,11 @@ def contains_exact(text: str, value: str) -> bool:
     pattern = rf"\b{re.escape(value.lower())}\b"
     return re.search(pattern, text.lower()) is not None
 
+
 def tokenize(text: str) -> list[str]:
     """Lightweight tokenizer for text processing."""
     return [w for w in re.findall(r"[a-zA-Z]+", text.lower())]
+
 
 def format_residents_info(residents: list) -> str:
     """Formats resident characters into a readable list for the prompt."""
@@ -62,4 +65,19 @@ Dimension: {location.dimension}
 Residents ({residents_count}):
 {residents_info}"""
                     
+    return context.strip()
+
+def build_episode_context(episode) -> str:
+    """Build structured context string for an episode."""
+    characters = episode.characters or []
+    character_count = len(characters)
+    character_names = ", ".join(character.name for character in characters) if characters else "None"
+    
+    context = f"""Episode: {episode.name}
+Episode Number: {episode.episode}
+Air Date: {episode.air_date}
+Total Characters: {character_count} character(s)
+Characters: {character_names}
+All the characters in the episode: {character_names}"""
+    
     return context.strip()

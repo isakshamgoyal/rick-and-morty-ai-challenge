@@ -2,7 +2,7 @@ import re
 from typing import Dict
 
 from src.core.ai.evaluation.base import BaseEvaluator
-from src.domains.ai.utils import contains_exact, tokenize
+from src.core.utils import contains_exact, tokenize
 
 class LocationAdventureEvaluator(BaseEvaluator):
     """Evaluator for location adventure story generation."""
