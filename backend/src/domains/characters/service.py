@@ -1,5 +1,6 @@
 import logging
 
+from src.core.utils import build_character_context, clean_prompt
 from src.domains.characters.models import CharactersPage, CharacterDetailed
 from src.integrations.rick_and_morty.service import rick_and_morty_service
 
@@ -30,6 +31,12 @@ class CharactersService:
         character = CharacterDetailed(**raw_data)
         logger.debug(f"Fetched character: {character.name}")
         return character
+
+    def get_character_context(self, character_id: int) -> str:
+        """Get a structured context string for a character by ID."""
+        character = self.get_character_by_id(character_id)
+        context = build_character_context(character)
+        return clean_prompt(context)
 
 
 # Singleton instance

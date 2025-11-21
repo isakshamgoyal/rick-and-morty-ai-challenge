@@ -1,5 +1,6 @@
 import logging
 
+from src.core.utils import build_episode_context, clean_prompt
 from src.domains.episodes.models import EpisodesPage, EpisodeDetailed
 from src.integrations.rick_and_morty.service import rick_and_morty_service
 
@@ -30,6 +31,12 @@ class EpisodesService:
         episode = EpisodeDetailed(**raw_data)
         logger.debug(f"Fetched episode: {episode.name}")
         return episode
+
+    def get_episode_context(self, episode_id: int) -> str:
+        """Get a structured context string for an episode by ID."""
+        episode = self.get_episode_by_id(episode_id)
+        context = build_episode_context(episode)
+        return clean_prompt(context)
 
 
 # Singleton instance

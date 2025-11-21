@@ -1,5 +1,6 @@
 import logging
 
+from src.core.utils import build_location_context, clean_prompt
 from src.domains.locations.models import LocationsPage, LocationDetailed, LocationsWithResidentsPage
 from src.integrations.rick_and_morty.service import rick_and_morty_service
 
@@ -43,6 +44,12 @@ class LocationsService:
         logger.debug(f"Parsed {len(locations_page.results)} locations with residents from page {page}")
         return locations_page
 
+
+    def get_location_context(self, location_id: int) -> str:
+        """Get a structured context string for a location by ID."""
+        location = self.get_location_by_id(location_id)
+        context = build_location_context(location)
+        return clean_prompt(context)
 
 # Singleton instance
 locations_service = LocationsService()
