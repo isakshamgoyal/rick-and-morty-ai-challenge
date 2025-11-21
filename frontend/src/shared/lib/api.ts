@@ -146,6 +146,25 @@ export interface AIHealthResponse {
   azure_openai: boolean;
 }
 
+// Semantic Search Types
+export interface SearchResult {
+  entity_id: number;
+  entity_type: 'character' | 'location' | 'episode';
+  score?: number | null;
+  entity_data?: any;
+}
+
+export interface SearchInfo {
+  query: string;
+  limit: number;
+  total_results: number;
+}
+
+export interface SearchResponse {
+  info: SearchInfo;
+  results: SearchResult[];
+}
+
 class ApiClient {
   private baseUrl: string;
 
@@ -220,6 +239,15 @@ class ApiClient {
     return this.fetch<void>(`/notes/${noteId}`, {
       method: 'DELETE',
     });
+  }
+
+  // Semantic Search
+  async semanticSearch(query: string, limit: number = 5): Promise<SearchResponse> {
+    const params = new URLSearchParams({
+      query,
+      limit: limit.toString(),
+    });
+    return this.fetch<SearchResponse>(`/ai/search?${params.toString()}`);
   }
 
   // AI Generation Methods

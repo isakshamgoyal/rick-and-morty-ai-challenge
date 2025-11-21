@@ -3,7 +3,8 @@
 import { usePathname, useRouter } from 'next/navigation';
 
 const navigation = [
-  { name: 'Explore Locations', href: '/' },
+  { name: 'Search', href: '/' },
+  { name: 'Location Explorer', href: '/location-explorer' },
   { name: 'AI Studio', href: '/ai-studio' },
 ];
 
