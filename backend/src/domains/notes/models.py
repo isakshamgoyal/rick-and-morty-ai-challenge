@@ -4,7 +4,7 @@ from sqlalchemy import Column, Integer, String, Text, DateTime, func
 
 from pydantic import BaseModel, ConfigDict
 
-from src.core.database import Base
+from src.core.database.connection import Base
 
 
 class Note(Base):

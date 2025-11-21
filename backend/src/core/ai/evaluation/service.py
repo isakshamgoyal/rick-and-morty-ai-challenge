@@ -1,9 +1,9 @@
 import logging
 from typing import Dict
 
-from src.domains.ai.evaluation.base import BaseEvaluator
-from src.domains.ai.evaluation.models import EvaluationRequest, EvaluationResponse
-from src.domains.ai.evaluation.llm_judge import llm_judge
+from src.core.ai.evaluation.base import BaseEvaluator
+from src.core.ai.evaluation.models import EvaluationRequest, EvaluationResponse
+from src.core.ai.evaluation.llm_judge import llm_judge
 
 logger = logging.getLogger(__name__)
 

@@ -2,7 +2,7 @@ from typing import Dict
 from pydantic import BaseModel, ConfigDict
 
 from src.domains.locations.models import LocationDetailed
-from src.domains.ai.evaluation.models import EvaluationRequest as BaseEvaluationRequest
+from src.core.ai.evaluation.models import EvaluationRequest as BaseEvaluationRequest
 
 
 class LocationAdventureStoryRequest(BaseModel):

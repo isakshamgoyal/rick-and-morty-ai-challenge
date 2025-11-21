@@ -1,12 +1,12 @@
 import logging
 from fastapi import APIRouter, HTTPException
 
-from src.domains.ai.generation.models import GenerationResponse
+from src.core.ai.generation.models import GenerationResponse
 from src.domains.ai.character_backstory.models import (
     CharacterBackstoryRequest,
     CharacterBackstoryEvaluationRequest,
 )
-from src.domains.ai.evaluation.models import EvaluationResponse
+from src.core.ai.evaluation.models import EvaluationResponse
 from src.domains.ai.character_backstory.service import character_backstory_service
 
 logger = logging.getLogger(__name__)

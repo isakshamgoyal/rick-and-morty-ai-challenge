@@ -1,8 +1,8 @@
 import re
 from typing import Dict
 
-from src.domains.ai.evaluation.base import BaseEvaluator
-from src.domains.ai.utils import contains_exact
+from src.core.ai.evaluation.base import BaseEvaluator
+from src.domains.ai.utils import contains_exact, tokenize
 
 class LocationAdventureEvaluator(BaseEvaluator):
     """Evaluator for location adventure story generation."""
@@ -90,35 +90,87 @@ class LocationAdventureEvaluator(BaseEvaluator):
         
         return 0.0 if total_weight == 0 else min(1.0, score / total_weight)
     
-    def compute_tone_score(self, text: str) -> float:
-        """Improved Rick & Morty tone/style scoring with weighted keyword groups."""
+    # def compute_tone_score(self, text: str) -> float:
+    #     """Improved Rick & Morty tone/style scoring with weighted keyword groups."""
         
-        text_lower = text.lower()
+    #     text_lower = text.lower()
 
-        # Sci-fi / multiverse markers (40%)
-        sci_fi_markers = [
-            "portal", "dimension", "multiverse", "universe", "interdimensional",
-            "galaxy", "cosmic", "quantum", "timeline", "anomaly", "portal gun"
+    #     # Sci-fi / multiverse markers (40%)
+    #     sci_fi_markers = [
+    #         "portal", "dimension", "multiverse", "universe", "interdimensional",
+    #         "galaxy", "cosmic", "quantum", "timeline", "anomaly", "portal gun"
+    #     ]
+
+    #     # Humor / attitude markers (35%)
+    #     humor_markers = [
+    #         "sarcasm", "sarcastic", "cynical", "absurd", "dark humor",
+    #         "messed up", "jeez", "oh man", "screw it", "what the hell",
+    #         "ridiculous", "chaotic"
+    #     ]
+
+    #     # Character / world references (25%)
+    #     world_markers = [
+    #         "rick", "morty", "smith", "c-137", "council of ricks",
+    #         "citadel of ricks", "schwifty", "wubba lubba dub dub"
+    #     ]
+
+    #     return (
+    #         0.40 * self.calculate_keyword_matches(text_lower, sci_fi_markers) +
+    #         0.35 * self.calculate_keyword_matches(text_lower, humor_markers) +
+    #         0.25 * self.calculate_keyword_matches(text_lower, world_markers)
+    #     )
+
+    def compute_tone_score(self, text: str) -> float:
+        """Loose Rick & Morty tone scoring without nltk (Jaccard + fuzzy)."""
+
+        RICK_MORTY_TONE_REFERENCE = """
+            rick morty chaotic absurd sarcastic cynical dark humor portal 
+            dimension multiverse universe bizarre sci-fi alien galactic 
+            cosmic interdimensional weird unpredictable wacky ridiculous 
+            meta existential experiment science portalgun portal-gun 
+            danger vaporized chaos cluster abadango
+        """
+
+        if not text:
+            return 0.0
+
+        # --- Lightweight tokenizer ---
+        
+
+        words_story = tokenize(text)
+        words_ref = tokenize(RICK_MORTY_TONE_REFERENCE)
+
+        if not words_story or not words_ref:
+            return 0.0
+
+        # --- Convert to sets ---
+        set_story = set(words_story)
+        set_ref = set(words_ref)
+
+        # --- Jaccard similarity (loose vocabulary overlap) ---
+        intersection = set_story & set_ref
+        union = set_story | set_ref
+        jaccard = len(intersection) / len(union) if union else 0.0
+
+        # --- Fuzzy prefix matches (captures variations like "galactic" vs "galaxy") ---
+        fuzzy_prefixes = [
+            "chaos", "galax", "ridicul", "sarcas", 
+            "absurd", "dark", "alien", "cosmic",
+            "weird", "experi", "danger", "multiver", "dimension"
         ]
 
-        # Humor / attitude markers (35%)
-        humor_markers = [
-            "sarcasm", "sarcastic", "cynical", "absurd", "dark humor",
-            "messed up", "jeez", "oh man", "screw it", "what the hell",
-            "ridiculous", "chaotic"
-        ]
-
-        # Character / world references (25%)
-        world_markers = [
-            "rick", "morty", "smith", "c-137", "council of ricks",
-            "citadel of ricks", "schwifty", "wubba lubba dub dub"
-        ]
-
-        return (
-            0.40 * self.calculate_keyword_matches(text_lower, sci_fi_markers) +
-            0.35 * self.calculate_keyword_matches(text_lower, humor_markers) +
-            0.25 * self.calculate_keyword_matches(text_lower, world_markers)
+        fuzzy_hits = sum(
+            any(w.startswith(prefix) for w in set_story)
+            for prefix in fuzzy_prefixes
         )
+
+        fuzzy_score = min(1.0, fuzzy_hits / len(fuzzy_prefixes))
+
+        # --- Weighted final score ---
+        final_score = 0.7 * jaccard + 0.3 * fuzzy_score
+
+        return min(1.0, final_score)
+
     
     def compute_resident_relevance(self, text: str, location) -> float:
         """Measures how strongly the adventure story involves location residents."""

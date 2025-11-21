@@ -15,6 +15,10 @@ def contains_exact(text: str, value: str) -> bool:
     pattern = rf"\b{re.escape(value.lower())}\b"
     return re.search(pattern, text.lower()) is not None
 
+def tokenize(text: str) -> list[str]:
+    """Lightweight tokenizer for text processing."""
+    return [w for w in re.findall(r"[a-zA-Z]+", text.lower())]
+
 def format_residents_info(residents: list) -> str:
     """Formats resident characters into a readable list for the prompt."""
     if not residents:

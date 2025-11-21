@@ -2,7 +2,7 @@ import logging
 from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy.orm import Session
 
-from src.core.database import db_connection
+from src.core.database.connection import db_connection
 from src.domains.notes import models as notes_models
 from src.domains.notes.service import NotesService
 

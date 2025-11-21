@@ -1,7 +1,7 @@
 from typing import Optional
 from sqlalchemy.orm import Session
 
-from src.core.repository import BaseRepository
+from src.core.database.repository import BaseRepository
 
 
 class NotesRepository(BaseRepository):

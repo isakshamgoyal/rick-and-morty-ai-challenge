@@ -1,8 +1,8 @@
 import re
 from typing import Dict
 
-from src.domains.ai.evaluation.base import BaseEvaluator
-from src.domains.ai.utils import contains_exact
+from src.core.ai.evaluation.base import BaseEvaluator
+from src.domains.ai.utils import contains_exact, tokenize
 
 
 class CharacterBackstoryEvaluator(BaseEvaluator):
@@ -82,40 +82,88 @@ class CharacterBackstoryEvaluator(BaseEvaluator):
         return 0.0 if total_weight == 0 else min(1.0, score / total_weight)
 
     
-    def compute_tone_score(self, text: str) -> float:
-        """Weighted Rick & Morty tone scoring for character backstories."""
+    # def compute_tone_score(self, text: str) -> float:
+    #     """Weighted Rick & Morty tone scoring for character backstories."""
     
-        text_lower = text.lower()
-        print(text_lower)
+    #     text_lower = text.lower()
+    #     print(text_lower)
 
-        # 1. Sci-fi / multiverse markers (30%)
-        sci_fi_markers = [
-            "portal", "dimension", "multiverse", "universe", "interdimensional",
-            "quantum", "galaxy", "timeline", "rift", "anomaly"
+    #     # 1. Sci-fi / multiverse markers (30%)
+    #     sci_fi_markers = [
+    #         "portal", "dimension", "multiverse", "universe", "interdimensional",
+    #         "quantum", "galaxy", "timeline", "rift", "anomaly"
+    #     ]
+
+    #     # 2. Humor / cynicism markers (40%)
+    #     humor_markers = [
+    #         "sarcasm", "sarcastic", "cynical", "absurd", "dark humor", 
+    #         "messed up", "oh man", "jeez", "this is crazy", "what the hell",
+    #         "chaotic", "ridiculous"
+    #     ]
+
+    #     # 3. Rick & Morty world references (30%)
+    #     world_markers = [
+    #         "rick", "morty", "smith", "c-137", "portal gun", 
+    #         "citadel", "council of ricks", "ricks"
+    #     ]
+
+    #     print(self.calculate_keyword_matches(text_lower, sci_fi_markers))
+    #     print(self.calculate_keyword_matches(text_lower, humor_markers))
+    #     print(self.calculate_keyword_matches(text_lower, world_markers))    
+
+    #     return (
+    #         0.30 * self.calculate_keyword_matches(text_lower, sci_fi_markers)
+    #         + 0.40 * self.calculate_keyword_matches(text_lower, humor_markers)
+    #         + 0.30 * self.calculate_keyword_matches(text_lower, world_markers)
+    #     )
+
+    def compute_tone_score(self, text: str) -> float:
+        """Loose Rick & Morty tone scoring without nltk (Jaccard + fuzzy)."""
+
+        RICK_MORTY_TONE_REFERENCE = """
+            rick morty chaotic absurd sarcastic cynical dark humor portal 
+            dimension multiverse universe bizarre sci-fi alien galactic 
+            cosmic interdimensional weird unpredictable wacky ridiculous 
+            meta existential experiment science portalgun portal-gun 
+            danger vaporized chaos cluster abadango
+        """
+
+        if not text:
+            return 0.0
+
+        words_story = tokenize(text)
+        words_ref = tokenize(RICK_MORTY_TONE_REFERENCE)
+
+        if not words_story or not words_ref:
+            return 0.0
+
+        # --- Convert to sets ---
+        set_story = set(words_story)
+        set_ref = set(words_ref)
+
+        # --- Jaccard similarity (loose vocabulary overlap) ---
+        intersection = set_story & set_ref
+        union = set_story | set_ref
+        jaccard = len(intersection) / len(union) if union else 0.0
+
+        # --- Fuzzy prefix matches (captures variations like "galactic" vs "galaxy") ---
+        fuzzy_prefixes = [
+            "chaos", "galax", "ridicul", "sarcas", 
+            "absurd", "dark", "alien", "cosmic",
+            "weird", "experi", "danger", "multiver", "dimension"
         ]
 
-        # 2. Humor / cynicism markers (40%)
-        humor_markers = [
-            "sarcasm", "sarcastic", "cynical", "absurd", "dark humor", 
-            "messed up", "oh man", "jeez", "this is crazy", "what the hell",
-            "chaotic", "ridiculous"
-        ]
-
-        # 3. Rick & Morty world references (30%)
-        world_markers = [
-            "rick", "morty", "smith", "c-137", "portal gun", 
-            "citadel", "council of ricks", "ricks"
-        ]
-
-        print(self.calculate_keyword_matches(text_lower, sci_fi_markers))
-        print(self.calculate_keyword_matches(text_lower, humor_markers))
-        print(self.calculate_keyword_matches(text_lower, world_markers))    
-
-        return (
-            0.30 * self.calculate_keyword_matches(text_lower, sci_fi_markers)
-            + 0.40 * self.calculate_keyword_matches(text_lower, humor_markers)
-            + 0.30 * self.calculate_keyword_matches(text_lower, world_markers)
+        fuzzy_hits = sum(
+            any(w.startswith(prefix) for w in set_story)
+            for prefix in fuzzy_prefixes
         )
+
+        fuzzy_score = min(1.0, fuzzy_hits / len(fuzzy_prefixes))
+
+        # --- Weighted final score ---
+        final_score = 0.7 * jaccard + 0.3 * fuzzy_score
+
+        return min(1.0, final_score)
     
     def compute_narrative_relevance_character(self, text: str, character) -> float:
         """Check if the generated text is a meaningful backstory of the character."""

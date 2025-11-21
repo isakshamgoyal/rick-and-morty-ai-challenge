@@ -2,7 +2,7 @@ from typing import Optional, Dict
 from pydantic import BaseModel, ConfigDict
 
 from src.domains.characters.models import CharacterDetailed
-from src.domains.ai.evaluation.models import EvaluationRequest as BaseEvaluationRequest
+from src.core.ai.evaluation.models import EvaluationRequest as BaseEvaluationRequest
 
 
 class CharacterBackstoryRequest(BaseModel):

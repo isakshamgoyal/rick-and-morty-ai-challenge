@@ -1,9 +1,9 @@
 from typing import Optional, TypeVar, Generic, Type
+
 from sqlalchemy.orm import Session, DeclarativeBase
-from sqlalchemy import select, delete, update, func
+from sqlalchemy import func
 
 ModelType = TypeVar("ModelType", bound=DeclarativeBase)
-
 
 class BaseRepository(Generic[ModelType]):
     """Base repository for centralized ORM query execution."""

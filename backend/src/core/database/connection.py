@@ -50,7 +50,7 @@ class DatabaseConnection:
     def _warmup_connections(self) -> None:
         """Pre-warm the connection pool to avoid cold start delays."""
         try:
-            # Create a few connections to wake up the database and populate the pool
+            # Create a few connections to wake up Neon if it's sleeping
             connections_to_warm = 3
             for i in range(connections_to_warm):
                 conn = self.engine.connect()

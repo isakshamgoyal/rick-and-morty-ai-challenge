@@ -1,8 +1,8 @@
 import logging
 from fastapi import APIRouter, HTTPException
 
-from src.domains.ai.generation.models import GenerationResponse
-from src.domains.ai.evaluation.models import EvaluationResponse
+from src.core.ai.generation.models import GenerationResponse
+from src.core.ai.evaluation.models import EvaluationResponse
 from src.domains.ai.location_adventure_story.models import (
     LocationAdventureStoryRequest,
     LocationAdventureEvaluationRequest,

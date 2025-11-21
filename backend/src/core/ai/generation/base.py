@@ -2,7 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from src.domains.ai.generation.models import GenerationResponse
+from src.core.ai.generation.models import GenerationResponse
 from src.integrations.azure_openai_client import azure_openai_client
 
 logger = logging.getLogger(__name__)

@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # Import core configuration
 from src.core.config import settings
-from src.core.database import db_connection, Base
+from src.core.database.connection import db_connection, Base
 
 # Import API routers
 from src.api.v1.router import router as api_router_v1
