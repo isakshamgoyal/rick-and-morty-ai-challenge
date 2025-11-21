@@ -5,12 +5,13 @@ from src.core.exceptions import ExternalServiceException
 from src.integrations.rick_and_morty.client import GraphQLClient
 from src.integrations.rick_and_morty.queries.locations import LocationQueries
 from src.integrations.rick_and_morty.queries.characters import CharacterQueries
+from src.integrations.rick_and_morty.queries.episodes import EpisodeQueries
 
 logger = logging.getLogger(__name__)
 
 
 class RickAndMortyService:
-    """Provides methods to fetch locations and characters from Rick & Morty API."""
+    """Provides methods to fetch locations, characters and episodes from Rick & Morty API."""
     
     def __init__(self):
         """Initializes the service with a GraphQL client."""
@@ -85,6 +86,34 @@ class RickAndMortyService:
         except Exception as e:
             logger.error(f"Error fetching character {character_id}: {e}")
             raise ExternalServiceException(f"Failed to fetch character: {str(e)}")
+
+    def fetch_episodes_page(self, page: int = 1) -> Dict[str, Any]:
+        """Fetches a paginated list of episodes with basic information."""
+        try:
+            result = self.client.execute(
+                EpisodeQueries.GET_EPISODES_PAGE,
+                variables={"page": page}
+            )
+            episodes_data = result["episodes"]
+            logger.info(f"Fetched page {page}: {len(episodes_data['results'])} episodes")
+            return episodes_data
+        except Exception as e:
+            logger.error(f"Error fetching episodes page {page}: {e}")
+            raise ExternalServiceException(f"Failed to fetch episodes: {str(e)}")
+
+    def fetch_episode_by_id(self, episode_id: int) -> Dict[str, Any]:
+        """Fetches a single episode by ID including all available details."""
+        try:
+            result = self.client.execute(
+                EpisodeQueries.GET_EPISODE_BY_ID,
+                variables={"id": str(episode_id)}
+            )
+            episode_data = result["episode"]
+            logger.info(f"Fetched episode: {episode_data['name']}")
+            return episode_data
+        except Exception as e:
+            logger.error(f"Error fetching episode {episode_id}: {e}")
+            raise ExternalServiceException(f"Failed to fetch episode: {str(e)}")
 
 
 # Singleton instance
