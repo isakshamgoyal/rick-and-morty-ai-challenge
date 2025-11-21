@@ -24,6 +24,8 @@ export default function CharacterBackstoryPage() {
   const [loadingBackstory, setLoadingBackstory] = useState(false);
   const [loadingEvaluation, setLoadingEvaluation] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [savingNote, setSavingNote] = useState(false);
+  const [hasSavedNote, setHasSavedNote] = useState(false);
   
   const observerTarget = useInfiniteScroll({
     hasMore,
@@ -99,6 +101,8 @@ export default function CharacterBackstoryPage() {
     setErrorMessage(null);
     setLoadingDetails(false);
     setLoadingBackstory(false);
+    setSavingNote(false);
+    setHasSavedNote(false);
   }, []);
 
   const handleEvaluateBackstory = useCallback(async () => {
@@ -125,6 +129,23 @@ export default function CharacterBackstoryPage() {
       setLoadingEvaluation(false);
     }
   }, [backstory, characterDetails]);
+
+  const handleSaveBackstoryToNotes = useCallback(async () => {
+    if (!backstory || !characterDetails || savingNote || hasSavedNote) return;
+
+    setSavingNote(true);
+
+    try {
+      await apiClient.createNote({
+        character_id: characterDetails.id,
+        content: backstory.generated_content,
+      });
+      setHasSavedNote(true);
+    } catch (err) {
+    } finally {
+      setSavingNote(false);
+    }
+  }, [backstory, characterDetails, savingNote]);
 
   if (viewState === 'details' || viewState === 'generating' || viewState === 'result') {
     return (
@@ -260,6 +281,18 @@ export default function CharacterBackstoryPage() {
 
                 <div className="prose prose-sm max-w-none">
                   <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{backstory.generated_content}</p>
+                </div>
+
+                <div className="flex flex-col items-stretch gap-2 pt-2 border-t border-gray-100">
+                  <button
+                    onClick={() => {
+                      void handleSaveBackstoryToNotes();
+                    }}
+                    disabled={savingNote || hasSavedNote}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed text-white text-sm font-medium rounded-md transition-colors shadow-sm"
+                  >
+                    {hasSavedNote ? 'Saved' : savingNote ? 'Saving to Notes…' : 'Save to Notes'}
+                  </button>
                 </div>
               </div>
             )}
