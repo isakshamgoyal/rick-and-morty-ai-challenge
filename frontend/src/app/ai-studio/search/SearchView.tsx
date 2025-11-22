@@ -13,6 +13,7 @@ import CharacterDetails from '@/src/features/characters/components/CharacterDeta
 import LocationCard from '@/src/features/locations/components/LocationCard';
 import LocationDetails from '@/src/features/locations/components/LocationDetails';
 import EpisodeCard from '@/src/features/episodes/components/EpisodeCard';
+import EpisodeDetails from '@/src/features/episodes/components/EpisodeDetails';
 import type { CharacterDetailed as UiCharacterDetailed } from '@/src/features/characters/types';
 import type { LocationDetailed as UiLocationDetailed } from '@/src/features/locations/types';
 import type { EpisodeDetailed as UiEpisodeDetailed } from '@/src/features/episodes/types';
@@ -256,15 +257,7 @@ export default function SearchView() {
 
             {/* For episodes we keep it minimal for now; can add EpisodeDetails later */}
             {selectedResult.entity_type === 'episode' && selectedResult.entity_data && (
-              <div className="text-sm text-gray-700">
-                <p className="font-medium">
-                  {(selectedResult.entity_data as UiEpisodeDetailed).name}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {(selectedResult.entity_data as UiEpisodeDetailed).episode} ·{' '}
-                  {(selectedResult.entity_data as UiEpisodeDetailed).air_date}
-                </p>
-              </div>
+              <EpisodeDetails episode={selectedResult.entity_data as UiEpisodeDetailed} />
             )}
           </div>
         </div>
