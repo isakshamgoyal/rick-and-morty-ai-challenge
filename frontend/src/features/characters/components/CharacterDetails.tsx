@@ -1,6 +1,8 @@
 'use client';
 
 import type { CharacterDetailed } from '../types';
+import { useNotes } from '@/src/features/notes/hooks/useNotes';
+import NoteCard from '@/src/features/notes/components/NoteCard';
 
 interface CharacterDetailsProps {
   character: CharacterDetailed;
@@ -12,6 +14,16 @@ export default function CharacterDetails({ character }: CharacterDetailsProps) {
     'Dead': 'bg-red-100 text-red-800',
     'unknown': 'bg-gray-100 text-gray-800',
   }[character.status] || 'bg-gray-100 text-gray-800';
+
+  const { notes, loading: notesLoading, updateNote, deleteNote } = useNotes(character.id);
+
+  const handleUpdateNote = async (noteId: number, content: string) => {
+    await updateNote(noteId, { content });
+  };
+
+  const handleDeleteNote = async (noteId: number) => {
+    await deleteNote(noteId);
+  };
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
@@ -86,6 +98,32 @@ export default function CharacterDetails({ character }: CharacterDetailsProps) {
             </div>
           </div>
         )}
+
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Notes ({notes.length})</h3>
+          {notesLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
+              <span className="ml-2 text-sm text-gray-500">Loading notes...</span>
+            </div>
+          ) : notes.length === 0 ? (
+            <div className="text-center py-8 text-sm text-gray-500">
+              No notes saved for this character yet.
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {notes.map((note) => (
+                <NoteCard
+                  key={note.id}
+                  note={note}
+                  loading={notesLoading}
+                  onUpdate={handleUpdateNote}
+                  onDelete={handleDeleteNote}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
