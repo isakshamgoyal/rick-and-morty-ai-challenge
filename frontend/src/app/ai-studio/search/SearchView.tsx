@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import {
   apiClient,
   type SearchResponse,
@@ -160,7 +160,7 @@ export default function SearchView() {
                 {results.map((result) => {
                   const key = `${result.entity_type}-${result.entity_id}-${result.score ?? 'na'}`;
 
-                  let card: JSX.Element | null = null;
+                  let card: React.ReactElement | null = null;
                   if (result.entity_type === 'character' && result.entity_data) {
                     const character = result.entity_data as ApiCharacter;
                     card = (
