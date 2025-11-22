@@ -41,5 +41,5 @@ ON search_indexes
 USING ivfflat (embedding vector_cosine_ops)
 WITH (lists = 100);
 
--- -- Train the IVFFlat index
--- ANALYZE search_indexes;
+-- Train the IVFFlat index
+ANALYZE search_indexes;

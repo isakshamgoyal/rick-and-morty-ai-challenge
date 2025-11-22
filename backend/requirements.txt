@@ -1,6 +1,7 @@
 # FastAPI Backend
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
+gunicorn>=21.2.0
 python-multipart>=0.0.6
 
 # Data & Validation
@@ -15,6 +16,11 @@ sqlalchemy>=2.0.0
 asyncpg>=0.29.0
 greenlet
 pgvector
+psycopg2-binary>=2.9.0
+
+# AI & ML
+openai
+numpy
 
 # Development
 python-dotenv>=1.0.0
