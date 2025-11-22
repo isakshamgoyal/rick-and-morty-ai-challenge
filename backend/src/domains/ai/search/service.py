@@ -74,16 +74,16 @@ class SearchService:
 
         # Build base context from the appropriate domain service
         if entity_type == "character":
-            base_context = characters_service.get_character_context(entity_id)
+            base_context = characters_service.get_character_context(entity_id, include_all_episodes_info=False)
         elif entity_type == "location":
-            base_context = locations_service.get_location_context(entity_id)
+            base_context = locations_service.get_location_context(entity_id, include_all_residents_info=False)
         elif entity_type == "episode":
-            base_context = episodes_service.get_episode_context(entity_id)
+            base_context = episodes_service.get_episode_context(entity_id, include_all_characters_info=True)
         else:
             raise ValueError(f"Unsupported entity type: {entity_type}")
 
         # Enrich with additional context (empty string by default)
-        full_context = f"{base_context}\n\n{payload.additional_context}".strip()
+        full_context = f"entity_type: {entity_type}\n{base_context}\n\n{payload.additional_context}".strip()
 
         # Generate embedding for the full context   
         embedding = await azure_openai_client.generate_embedding(full_context)

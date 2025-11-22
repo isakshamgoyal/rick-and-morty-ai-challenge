@@ -45,10 +45,10 @@ class LocationsService:
         return locations_page
 
 
-    def get_location_context(self, location_id: int) -> str:
+    def get_location_context(self, location_id: int, include_all_residents_info: bool) -> str:
         """Get a structured context string for a location by ID."""
         location = self.get_location_by_id(location_id)
-        context = build_location_context(location)
+        context = build_location_context(location, include_all_residents_info)
         return clean_prompt(context)
 
 # Singleton instance

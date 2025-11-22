@@ -32,10 +32,10 @@ class EpisodesService:
         logger.debug(f"Fetched episode: {episode.name}")
         return episode
 
-    def get_episode_context(self, episode_id: int) -> str:
+    def get_episode_context(self, episode_id: int, include_all_characters_info: bool) -> str:
         """Get a structured context string for an episode by ID."""
         episode = self.get_episode_by_id(episode_id)
-        context = build_episode_context(episode)
+        context = build_episode_context(episode, include_all_characters_info)
         return clean_prompt(context)
 
 

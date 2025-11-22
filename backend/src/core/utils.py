@@ -22,7 +22,7 @@ def tokenize(text: str) -> list[str]:
     return [w for w in re.findall(r"[a-zA-Z]+", text.lower())]
 
 
-def format_residents_info(residents: list) -> str:
+def format_residents_info(residents: list, limit: int = 5) -> str:
     """Formats resident characters into a readable list for the prompt."""
     if not residents:
         return "No known residents"
@@ -31,53 +31,61 @@ def format_residents_info(residents: list) -> str:
     for resident in residents:
         residents_list.append(f"{resident.name} ({resident.species}, {resident.status})")
     
+    residents_list = residents_list[:limit]
     return "\n".join(residents_list)
 
 
-def build_character_context(character) -> str:
+def build_character_context(character, include_all_episodes_info: bool = True) -> str:
     """Build structured context string for a character."""
     episodes = character.episode or []
-    episode_count = len(episodes)
-    episode_names = ", ".join(episode.name for episode in episodes) if episodes else "None"
     
-    context = f"""Name: {character.name}
+    context = f"""Character Name: {character.name}
 Species: {character.species}
 Status: {character.status}
 Gender: {character.gender}
-Type: {character.type}
+Type: {character.type or "Unknown"}
 Origin: {character.origin.name} ({character.origin.dimension})
 Current Location: {character.location.name} ({character.location.dimension})
-Total Episodes: {episode_count} episode(s)
-All the episodes in which the character appeared: {episode_names}"""
+Total Episodes: {len(episodes)} episode(s)"""
+
+    if include_all_episodes_info:
+        episode_names = ", ".join(episode.name for episode in episodes) if episodes else "None"
+    else:
+        episode_names = ", ".join(episode.name for episode in episodes[:5]) if episodes else "None"
     
+    context += f"\nEpisodes Info: {episode_names}"
+
     return context.strip()
 
 
-def build_location_context(location) -> str:
+def build_location_context(location, include_all_residents_info: bool = True) -> str:
     """Build structured context string for a location."""
     residents = location.residents or []
     residents_count = len(residents)
-    residents_info = format_residents_info(residents)
+    residents_limit = residents_count if include_all_residents_info else 5
     
     context = f"""Location: {location.name}
 Type: {location.type}
 Dimension: {location.dimension}
-Residents ({residents_count}):
-{residents_info}"""
-                    
+Total Residents: {residents_count}
+Residents Info: {format_residents_info(residents, residents_limit)}
+"""
+
     return context.strip()
 
-def build_episode_context(episode) -> str:
+def build_episode_context(episode, include_all_characters_info: bool = True) -> str:
     """Build structured context string for an episode."""
     characters = episode.characters or []
     character_count = len(characters)
-    character_names = ", ".join(character.name for character in characters) if characters else "None"
+    character_limit = character_count if include_all_characters_info else 5
+    character_names = ", ".join(character.name for character in characters[:character_limit]) if characters else "None"
     
     context = f"""Episode: {episode.name}
 Episode Number: {episode.episode}
 Air Date: {episode.air_date}
-Total Characters: {character_count} character(s)
-Characters: {character_names}
-All the characters in the episode: {character_names}"""
+Total Characters: {character_count}
+Characters Info: "{character_names}"
+"""
+
     
     return context.strip()

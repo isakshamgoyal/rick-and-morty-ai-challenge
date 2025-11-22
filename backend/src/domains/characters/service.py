@@ -32,10 +32,10 @@ class CharactersService:
         logger.debug(f"Fetched character: {character.name}")
         return character
 
-    def get_character_context(self, character_id: int) -> str:
+    def get_character_context(self, character_id: int, include_all_episodes_info: bool ) -> str:
         """Get a structured context string for a character by ID."""
         character = self.get_character_by_id(character_id)
-        context = build_character_context(character)
+        context = build_character_context(character, include_all_episodes_info)
         return clean_prompt(context)
 
 
